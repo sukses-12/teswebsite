@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RescueMart - Selamatkan Makanan, Hemat Pengeluaran</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f3f4f6;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Modal Transition */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .hero-pattern {
+            background-color: #16a34a;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2315803d' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="text-gray-800 font-sans flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="location.reload()">
+                        <div class="bg-brand-600 text-white p-2 rounded-lg">
+                            <i class="fa-solid fa-leaf text-xl"></i>
+                        </div>
+                        <span class="font-bold text-xl tracking-tight text-brand-900">RescueMart</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Actions -->
+                <div class="flex items-center gap-4">
+                    <!-- Auth Buttons (Logged Out State) -->
+                    <div id="auth-buttons" class="hidden md:flex gap-2">
+                        <button onclick="openModal('modal-login')" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2 rounded-full text-sm transition shadow-sm tracking-wide">
+                            LOGIN
+                        </button>
+                    </div>
+
+                    <!-- User Profile (Logged In State) -->
+                    <div id="user-profile" class="hidden items-center gap-4 border-l pl-4 ml-2 border-gray-200">
+                        
+                        <!-- Location Indicator -->
+                        <div class="hidden md:flex items-center gap-2 text-xs md:text-sm text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200">
+                            <i class="fa-solid fa-location-dot text-red-500"></i>
+                            <span id="nav-user-location" class="max-w-[120px] truncate font-medium">Lokasi</span>
+                        </div>
+
+                        <!-- Profile Trigger -->
+                        <div onclick="openModal('modal-profile')" class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition group">
+                            <div class="flex flex-col text-right">
+                                <span id="nav-user-name" class="text-sm font-bold text-gray-800 leading-tight group-hover:text-brand-600 transition">User</span>
+                                <span id="nav-user-role" class="text-xs text-brand-600 font-medium">Pembeli</span>
+                            </div>
+                            <div class="h-9 w-9 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-bold text-sm ring-2 ring-transparent group-hover:ring-brand-200 transition">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        </div>
+                        
+                        <button onclick="handleLogout()" class="text-gray-400 hover:text-red-500 ml-1" title="Keluar">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none ml-2">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    
+                    <!-- Cart Icon (Buyer Only) -->
+                    <div id="cart-icon-container" onclick="openCart()" class="relative cursor-pointer hover:text-brand-600 transition ml-2 hidden">
+                        <i class="fa-solid fa-basket-shopping text-2xl text-gray-600"></i>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center transform scale-0 transition-transform duration-200">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t p-4 shadow-lg animate-fade-in">
+            <!-- Mobile Auth Logged Out -->
+            <div id="mobile-auth-buttons" class="flex flex-col gap-2 mb-4">
+                <button onclick="openModal('modal-login'); toggleMobileMenu()" class="w-full bg-brand-600 text-white font-bold py-2 rounded-lg tracking-wide">LOGIN</button>
+            </div>
+            
+            <!-- Mobile Auth Logged In -->
+            <div id="mobile-user-profile" class="hidden mb-4 border-b pb-4">
+                <div onclick="openModal('modal-profile'); toggleMobileMenu()" class="flex items-center gap-3 mb-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50">
+                    <div class="h-10 w-10 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <p id="mobile-user-name" class="font-bold text-gray-800">User Name</p>
+                        <p id="mobile-user-role" class="text-xs text-brand-600">Pembeli</p>
+                        <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-pen"></i> Edit Profil</p>
+                    </div>
+                </div>
+
+                <button onclick="openCart(); toggleMobileMenu()" class="w-full text-left text-brand-600 text-sm font-bold px-2 py-2 mb-2"><i class="fa-solid fa-basket-shopping mr-2"></i> Keranjang Belanja</button>
+                <button onclick="handleLogout()" class="w-full text-left text-red-500 text-sm font-medium px-2"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+            </div>
+
+            <div id="mobile-nav-links" class="hidden">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Menu</p>
+                <button id="btn-mob-buyer" onclick="switchRole('buyer'); toggleMobileMenu()" class="w-full text-left py-3 border-b text-gray-700 hover:text-brand-600">Beranda Pembeli</button>
+                <button id="btn-mob-seller" onclick="switchRole('seller'); toggleMobileMenu()" class="w-full text-left py-3 text-gray-700 hover:text-brand-600">Dashboard Toko</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-grow">
+        
+        <!-- VIEW: LANDING PAGE -->
+        <div id="landing-view" class="block animate-fade-in">
+            <section class="hero-pattern text-white py-20 px-4 sm:px-6 lg:px-8">
+                <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                    <div class="md:w-1/2 text-center md:text-left">
+                        <h1 class="text-4xl md:text-5xl font-extrabold leading-tight mb-6 drop-shadow-sm">
+                            Selamatkan Makanan, <br/>
+                            <span class="text-brand-100">Selamatkan Bumi</span>
+                        </h1>
+                        <p class="text-lg text-brand-50 mb-8 leading-relaxed">
+                            Platform penghubung toko dengan pembeli cerdas untuk mengurangi limbah makanan. Dapatkan makanan berkualitas dengan harga miring sebelum kadaluwarsa.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                            <button onclick="openModal('modal-register')" class="bg-white text-brand-700 font-bold px-8 py-3 rounded-full hover:bg-brand-50 transition shadow-lg transform hover:-translate-y-1">
+                                Gabung Sekarang
+                            </button>
+                            <button onclick="startGuestMode()" class="border-2 border-white text-white font-semibold px-8 py-3 rounded-full hover:bg-white hover:text-brand-700 transition">
+                                Lihat Katalog
+                            </button>
+                        </div>
+                    </div>
+                    <div class="md:w-1/2 flex justify-center">
+                        <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Belanja Hemat" class="rounded-2xl shadow-2xl border-4 border-brand-500 w-full max-w-md object-cover transform rotate-3 hover:rotate-0 transition duration-500">
+                    </div>
+                </div>
+            </section>
+            
+            <section class="py-16 bg-white">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16"><h2 class="text-3xl font-bold text-brand-900 mb-4">Mengapa RescueMart?</h2></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="bg-brand-50 rounded-xl p-8 text-center hover:shadow-lg transition border border-brand-100"><div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl"><i class="fa-solid fa-tag"></i></div><h3 class="text-xl font-bold text-gray-800 mb-2">Hemat Hingga 70%</h3></div>
+                        <div class="bg-brand-50 rounded-xl p-8 text-center hover:shadow-lg transition border border-brand-100"><div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl"><i class="fa-solid fa-earth-americas"></i></div><h3 class="text-xl font-bold text-gray-800 mb-2">Kurangi Limbah</h3></div>
+                        <div class="bg-brand-50 rounded-xl p-8 text-center hover:shadow-lg transition border border-brand-100"><div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl"><i class="fa-solid fa-store"></i></div><h3 class="text-xl font-bold text-gray-800 mb-2">Dukung Bisnis Lokal</h3></div>
+                    </div>
+                </div>
+            </section>
+            <footer class="bg-brand-900 text-white py-8"><div class="max-w-7xl mx-auto px-4 text-center"><p class="text-brand-400 text-xs mt-8">&copy; 2024 RescueMart Indonesia.</p></div></footer>
+        </div>
+
+        <!-- VIEW: BUYER (PEMBELI) -->
+        <div id="buyer-view" class="hidden animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Hero Section -->
+            <div class="bg-brand-600 rounded-2xl p-6 md:p-10 mb-8 text-white flex flex-col md:flex-row items-center justify-between shadow-lg">
+                <div class="md:w-2/3">
+                    <h1 class="text-3xl md:text-4xl font-bold mb-2">Katalog Penyelamatan Makanan</h1>
+                    <p class="text-brand-100 text-lg mb-6">Pilih produk di bawah ini, selamatkan dari tempat sampah, dan nikmati hematnya.</p>
+                    <div class="relative max-w-lg">
+                        <input type="text" id="search-input" onkeyup="filterProducts()" placeholder="Cari roti, susu, atau sayuran..." class="w-full py-3 px-5 pr-12 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-300 shadow-md">
+                        <button class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-brand-500 text-white p-2 rounded-full hover:bg-brand-700 transition"><i class="fa-solid fa-search"></i></button>
+                    </div>
+                </div>
+                <div class="md:w-1/3 mt-6 md:mt-0 flex justify-center"><i class="fa-solid fa-basket-shopping text-9xl opacity-20"></i></div>
+            </div>
+
+            <!-- Categories -->
+            <div class="flex gap-3 overflow-x-auto hide-scrollbar mb-8 pb-2">
+                <button onclick="filterCategory('all')" class="cat-btn active px-6 py-2 rounded-full bg-brand-100 text-brand-700 font-semibold whitespace-nowrap hover:bg-brand-200 transition ring-2 ring-brand-500">Semua</button>
+                <button onclick="filterCategory('Roti & Kue')" class="cat-btn px-6 py-2 rounded-full bg-white text-gray-600 border border-gray-200 font-medium whitespace-nowrap hover:bg-gray-50 transition">🍞 Roti & Kue</button>
+                <button onclick="filterCategory('Produk Segar')" class="cat-btn px-6 py-2 rounded-full bg-white text-gray-600 border border-gray-200 font-medium whitespace-nowrap hover:bg-gray-50 transition">🥬 Produk Segar</button>
+                <button onclick="filterCategory('Minuman')" class="cat-btn px-6 py-2 rounded-full bg-white text-gray-600 border border-gray-200 font-medium whitespace-nowrap hover:bg-gray-50 transition">🥛 Minuman</button>
+                <button onclick="filterCategory('Makanan Ringan')" class="cat-btn px-6 py-2 rounded-full bg-white text-gray-600 border border-gray-200 font-medium whitespace-nowrap hover:bg-gray-50 transition">🍪 Makanan Ringan</button>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Rekomendasi di Sekitarmu</h2>
+                    <p id="filter-info-text" class="text-sm text-gray-500 mt-1">Menampilkan semua produk</p>
+                </div>
+                <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                    <i class="fa-solid fa-location-dot text-red-500"></i>
+                    <span id="buyer-location-display" class="text-sm font-semibold text-gray-700">Semua Kota</span>
+                </div>
+            </div>
+
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Products will be injected here by JS -->
+            </div>
+            
+            <div id="empty-state" class="hidden text-center py-12">
+                <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-map-location-dot text-4xl text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Tidak ada produk di kota ini</h3>
+                <p class="text-gray-500 text-lg max-w-md mx-auto">Coba ganti lokasi di profil Anda atau lihat kota lain.</p>
+                <button onclick="openModal('modal-profile')" class="mt-4 text-brand-600 font-bold hover:underline">Ganti Lokasi</button>
+            </div>
+        </div>
+
+        <!-- VIEW: SELLER (TOKO) -->
+        <div id="seller-view" class="hidden animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4"><div class="p-3 bg-green-100 text-green-600 rounded-lg"><i class="fa-solid fa-recycle text-2xl"></i></div><div><p class="text-sm text-gray-500">Makanan Diselamatkan</p><h3 class="text-2xl font-bold text-gray-800">128 Kg</h3></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4"><div class="p-3 bg-blue-100 text-blue-600 rounded-lg"><i class="fa-solid fa-wallet text-2xl"></i></div><div><p class="text-sm text-gray-500">Dicegah Kerugian</p><h3 class="text-2xl font-bold text-gray-800">Rp 4.250.000</h3></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4"><div class="p-3 bg-orange-100 text-orange-600 rounded-lg"><i class="fa-solid fa-users text-2xl"></i></div><div><p class="text-sm text-gray-500">Pelanggan Baru</p><h3 class="text-2xl font-bold text-gray-800">45 Orang</h3></div></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-6 rounded-xl shadow-md sticky top-24">
+                        <h2 class="text-xl font-bold mb-4 text-brand-900 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i> Upload Produk Rescue</h2>
+                        <form id="add-product-form" onsubmit="handleAddProduct(event)">
+                            <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Nama Produk</label><input type="text" id="prod-name" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="Contoh: Roti Tawar Gandum"></div>
+                            <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label><select id="prod-category" class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm"><option value="Roti & Kue">Roti & Kue</option><option value="Produk Segar">Produk Segar (Sayur/Buah)</option><option value="Minuman">Minuman (Susu/Jus)</option><option value="Makanan Ringan">Makanan Ringan</option></select></div>
+                            <div class="grid grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-medium text-gray-700 mb-1">Harga Asli (Rp)</label><input type="number" id="prod-price-original" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="20000"></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Harga Rescue (Rp)</label><input type="number" id="prod-price-promo" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="10000"></div></div>
+                            <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kadaluwarsa</label><input type="date" id="prod-expiry" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm"></div>
+                            <div class="mb-6"><label class="block text-sm font-medium text-gray-700 mb-1">Stok Tersedia</label><input type="number" id="prod-stock" value="1" min="1" class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm"></div>
+                            <button type="submit" class="w-full bg-brand-600 text-white font-bold py-3 rounded-lg hover:bg-brand-700 transition shadow-lg transform active:scale-95">Upload Produk</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center"><h3 class="font-bold text-gray-800">Inventaris Aktif</h3><span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">Live di Web</span></div>
+                        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-gray-50 text-gray-600"><tr><th class="px-6 py-3 font-medium">Produk</th><th class="px-6 py-3 font-medium">Harga</th><th class="px-6 py-3 font-medium">Kota</th><th class="px-6 py-3 font-medium">Stok</th><th class="px-6 py-3 font-medium">Aksi</th></tr></thead><tbody id="inventory-list" class="divide-y divide-gray-100"></tbody></table></div>
+                        <div id="inventory-empty" class="hidden p-8 text-center text-gray-500">Belum ada produk yang diupload.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: CART (KERANJANG) -->
+    <div id="modal-cart" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4 modal">
+        <div class="bg-white rounded-2xl max-w-md w-full p-0 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fa-solid fa-basket-shopping text-brand-600"></i> Keranjang Belanja
+                </h3>
+                <button onclick="closeModal('modal-cart')" class="text-gray-400 hover:text-gray-600 transition"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div id="cart-items-container" class="flex-1 overflow-y-auto p-5 space-y-4"></div>
+            <div id="cart-empty-state" class="hidden p-10 text-center">
+                <i class="fa-solid fa-cart-arrow-down text-4xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500">Keranjang Anda masih kosong.</p>
+                <button onclick="closeModal('modal-cart')" class="mt-4 text-brand-600 font-bold hover:underline">Mulai Belanja</button>
+            </div>
+            <div id="cart-footer" class="p-5 border-t bg-gray-50 rounded-b-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-gray-600 font-medium">Total Pembayaran</span>
+                    <span id="cart-total-price" class="text-2xl font-bold text-brand-700">Rp 0</span>
+                </div>
+                <button onclick="checkout()" class="w-full bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 transition shadow-lg transform active:scale-95">
+                    Checkout Sekarang <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Success Checkout -->
+    <div id="modal-success" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 modal">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl transform scale-100 transition-transform">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-check text-3xl"></i></div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Pesanan Berhasil!</h3>
+            <p class="text-gray-600 mb-6 text-sm">Terima kasih telah menyelamatkan makanan. Silakan ambil pesanan Anda di toko masing-masing.</p>
+            <div class="bg-gray-50 p-4 rounded-lg mb-6 border border-dashed border-gray-300"><p class="text-xs text-gray-500 uppercase tracking-wide">Kode Pengambilan</p><p class="text-2xl font-mono font-bold text-brand-700 mt-1">RESCUE-8821</p></div>
+            <button onclick="closeModal('modal-success')" class="w-full bg-brand-600 text-white font-bold py-2 rounded-lg hover:bg-brand-700">Oke, Siap!</button>
+        </div>
+    </div>
+
+    <!-- MODAL: LOGIN -->
+    <div id="modal-login" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4 modal">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold text-gray-900">Masuk</h3><button onclick="closeModal('modal-login')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button></div>
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="login-email" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="nama@email.com"></div>
+                <div class="mb-6"><label class="block text-sm font-medium text-gray-700 mb-1">Password</label><input type="password" id="login-password" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="••••••••"></div>
+                <button type="submit" class="w-full bg-brand-600 text-white font-bold py-2.5 rounded-lg hover:bg-brand-700 transition">Masuk</button>
+            </form>
+            <p class="mt-4 text-center text-sm text-gray-600">Belum punya akun? <a href="#" onclick="switchModal('modal-login', 'modal-register')" class="text-brand-600 font-bold hover:underline">Daftar</a></p>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTER -->
+    <div id="modal-register" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4 modal">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold text-gray-900">Buat Akun Baru</h3><button onclick="closeModal('modal-register')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button></div>
+            <form onsubmit="handleRegister(event)">
+                <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap / Nama Toko</label><input type="text" id="reg-name" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="Budi Santoso"></div>
+                <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="reg-email" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="nama@email.com"></div>
+                <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Password</label><input type="password" id="reg-password" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="••••••••"></div>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Kota (Penting)</label><select id="reg-city" class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm"><option value="Jakarta Selatan">Jakarta Selatan</option><option value="Jakarta Pusat">Jakarta Pusat</option><option value="Bandung">Bandung</option><option value="Surabaya">Surabaya</option><option value="Medan">Medan</option></select></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Peran</label><select id="reg-role" class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm"><option value="buyer">Pembeli</option><option value="seller">Penjual</option></select></div>
+                </div>
+                <div class="mb-6"><label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label><input type="text" id="reg-address" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm" placeholder="Contoh: Jl. Merdeka No. 1, RT/RW..."></div>
+                <button type="submit" class="w-full bg-brand-600 text-white font-bold py-2.5 rounded-lg hover:bg-brand-700 transition">Daftar Sekarang</button>
+            </form>
+            <p class="mt-4 text-center text-sm text-gray-600">Sudah punya akun? <a href="#" onclick="switchModal('modal-register', 'modal-login')" class="text-brand-600 font-bold hover:underline">Masuk</a></p>
+        </div>
+    </div>
+
+    <!-- MODAL: PROFILE -->
+    <div id="modal-profile" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4 modal">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b pb-3"><h3 id="profile-modal-title" class="text-xl font-bold text-gray-900">Profil Saya</h3><button onclick="closeModal('modal-profile')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times"></i></button></div>
+            <form onsubmit="handleUpdateProfile(event)">
+                <div class="mb-4 text-center"><div class="w-20 h-20 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-2"><i class="fa-solid fa-user"></i></div><p id="profile-email-display" class="text-sm text-gray-500">email@example.com</p></div>
+                <div class="mb-3"><label class="block text-sm font-medium text-gray-700 mb-1">Nama / Nama Toko</label><input type="text" id="profile-name" required class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm"></div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kota Domisili</label>
+                    <select id="profile-city" class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm"><option value="Jakarta Selatan">Jakarta Selatan</option><option value="Jakarta Pusat">Jakarta Pusat</option><option value="Bandung">Bandung</option><option value="Surabaya">Surabaya</option><option value="Medan">Medan</option></select>
+                    <p class="text-xs text-gray-500 mt-1" id="profile-city-hint">Produk akan difilter berdasarkan kota ini.</p>
+                </div>
+                <div class="mb-6"><label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label><textarea id="profile-address" rows="2" class="w-full border-gray-300 border rounded-lg px-3 py-2 text-sm"></textarea></div>
+                <button type="submit" class="w-full bg-brand-600 text-white font-bold py-2.5 rounded-lg hover:bg-brand-700 transition">Simpan Perubahan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- DATA & STATE ---
+        let currentRole = 'buyer'; // 'buyer' or 'seller'
+        let currentFilter = 'all';
+        let currentUser = JSON.parse(localStorage.getItem('rescueCurrentUser')) || null;
+        let isGuestMode = false;
+        let cart = JSON.parse(localStorage.getItem('rescueCart')) || []; // Cart State
+
+        // Mock Data (Expanded to 50+ Products)
+        const initialProducts = [
+            // --- JAKARTA SELATAN (12 Items) ---
+            {id: 1, name: "Roti Tawar Gandum", category: "Roti & Kue", originalPrice: 18000, price: 9000, expiry: "2023-11-25", store: "Indomaret Point", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 3},
+            {id: 3, name: "Paket Sayur Sop", category: "Produk Segar", originalPrice: 15000, price: 5000, expiry: "2023-11-24", store: "Sayur Box Station", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1597362925123-77861d3fbac7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 2},
+            {id: 11, name: "Salad Buah Segar", category: "Produk Segar", originalPrice: 35000, price: 17500, expiry: "2023-11-23", store: "FreshMarket Kemang", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 5},
+            {id: 12, name: "Susu Almond 1L", category: "Minuman", originalPrice: 65000, price: 30000, expiry: "2023-11-30", store: "HealthCo Gandaria", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1565223026387-a2f07f2a4073?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 4},
+            {id: 13, name: "Croissant Butter", category: "Roti & Kue", originalPrice: 25000, price: 10000, expiry: "2023-11-22", store: "Bakery 88", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1555507036-ab1f40388085?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 10},
+            {id: 14, name: "Ayam Ungkep Frozen", category: "Makanan Ringan", originalPrice: 55000, price: 35000, expiry: "2023-12-05", store: "Superindo Tebet", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1587593810167-a84920ea0781?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 6},
+            {id: 15, name: "Yoghurt Plain 500ml", category: "Minuman", originalPrice: 45000, price: 20000, expiry: "2023-11-28", store: "Ranch Market", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 3},
+            {id: 16, name: "Kale Organik 200g", category: "Produk Segar", originalPrice: 28000, price: 10000, expiry: "2023-11-24", store: "Farmers Market", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1524179091875-bf99a9a6af57?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 8},
+            {id: 17, name: "Cold Pressed Juice", category: "Minuman", originalPrice: 45000, price: 22500, expiry: "2023-11-23", store: "Rejuve Cipete", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 4},
+            {id: 18, name: "Cokelat Hitam 80%", category: "Makanan Ringan", originalPrice: 60000, price: 30000, expiry: "2023-12-15", store: "Cocoa Shop", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1511381976196-184045a18853?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 15},
+            {id: 19, name: "Keju Cheddar Block", category: "Produk Segar", originalPrice: 35000, price: 15000, expiry: "2023-12-01", store: "All Fresh", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 7},
+            {id: 20, name: "Telur Omega (Isi 6)", category: "Produk Segar", originalPrice: 22000, price: 11000, expiry: "2023-11-26", store: "Total Buah", city: "Jakarta Selatan", image: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 10},
+
+            // --- JAKARTA PUSAT (12 Items) ---
+            {id: 2, name: "Susu UHT Full Cream 1L", category: "Minuman", originalPrice: 22000, price: 13000, expiry: "2023-12-01", store: "Hero Gondangdia", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 5},
+            {id: 5, name: "Salmon Sashimi Grade B", category: "Produk Segar", originalPrice: 80000, price: 45000, expiry: "2023-11-22", store: "Grand Lucky Express", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 2},
+            {id: 21, name: "Nasi Bento Chicken", category: "Makanan Ringan", originalPrice: 35000, price: 15000, expiry: "2023-11-21", store: "FamilyMart Thamrin", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 8},
+            {id: 22, name: "Onigiri Tuna Mayo", category: "Makanan Ringan", originalPrice: 12000, price: 5000, expiry: "2023-11-21", store: "Lawson Menteng", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1595455850239-b9a6745e9d96?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 12},
+            {id: 23, name: "Kopi Susu Literan", category: "Minuman", originalPrice: 85000, price: 40000, expiry: "2023-11-23", store: "Kopi Kenangan", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1541167760496-1628856ab772?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 3},
+            {id: 24, name: "Pain Au Chocolat", category: "Roti & Kue", originalPrice: 28000, price: 14000, expiry: "2023-11-22", store: "Monsieur Spoon", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 6},
+            {id: 25, name: "Daging Wagyu Slice 250g", category: "Produk Segar", originalPrice: 150000, price: 75000, expiry: "2023-11-25", store: "FoodHall Plaza Indo", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1615937657715-bc7b4b7962c1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 2},
+            {id: 26, name: "Buah Naga Merah", category: "Produk Segar", originalPrice: 25000, price: 10000, expiry: "2023-11-26", store: "Total Buah Menteng", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1527773229672-09c379a2939e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 15},
+            {id: 27, name: "Sosis Sapi Bratwurst", category: "Makanan Ringan", originalPrice: 65000, price: 30000, expiry: "2023-11-30", store: "Hero Sarinah", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1585325701165-351af916e581?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 5},
+            {id: 28, name: "Pasta Spaghetti", category: "Makanan Ringan", originalPrice: 20000, price: 10000, expiry: "2023-12-10", store: "Grand Lucky", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1598511726612-933cc6d4e3e6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 20},
+            {id: 29, name: "Teh Hijau Kemasan", category: "Minuman", originalPrice: 8000, price: 3500, expiry: "2023-12-01", store: "Indomaret", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 25},
+            {id: 30, name: "Roti Tawar Kupas", category: "Roti & Kue", originalPrice: 16000, price: 7000, expiry: "2023-11-23", store: "Sari Roti", city: "Jakarta Pusat", image: "https://images.unsplash.com/photo-1619898869145-2f80c6533dc2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 8},
+
+            // --- BANDUNG (12 Items) ---
+            {id: 4, name: "Donat Gula (Isi 6)", category: "Roti & Kue", originalPrice: 35000, price: 15000, expiry: "2023-11-24", store: "Prima Rasa Bakery", city: "Bandung", image: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 1},
+            {id: 6, name: "Apel Fuji (Sedikit Memar)", category: "Produk Segar", originalPrice: 40000, price: 15000, expiry: "2023-11-25", store: "Yogya Riau", city: "Bandung", image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 5},
+            {id: 31, name: "Pisang Bolen Coklat", category: "Roti & Kue", originalPrice: 55000, price: 30000, expiry: "2023-11-23", store: "Kartika Sari", city: "Bandung", image: "https://images.unsplash.com/photo-1603532648955-039310d9ed75?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 4},
+            {id: 32, name: "Brownies Kukus", category: "Roti & Kue", originalPrice: 45000, price: 25000, expiry: "2023-11-24", store: "Amanda Brownies", city: "Bandung", image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 6},
+            {id: 33, name: "Susu Murni Lembang 1L", category: "Minuman", originalPrice: 15000, price: 8000, expiry: "2023-11-22", store: "KPSBU Lembang", city: "Bandung", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 10},
+            {id: 34, name: "Tahu Susu Lembang", category: "Produk Segar", originalPrice: 25000, price: 12500, expiry: "2023-11-23", store: "Tahu Lembang", city: "Bandung", image: "https://images.unsplash.com/photo-1576618148400-f54bed99fcf8?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 8},
+            {id: 35, name: "Batagor Frozen (Isi 10)", category: "Makanan Ringan", originalPrice: 40000, price: 20000, expiry: "2023-12-05", store: "Batagor Riri", city: "Bandung", image: "https://images.unsplash.com/photo-1563245372-f21724e3856d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 5},
+            {id: 36, name: "Strawberry Ciwidey 500g", category: "Produk Segar", originalPrice: 30000, price: 10000, expiry: "2023-11-22", store: "Supermarket Setiabudi", city: "Bandung", image: "https://images.unsplash.com/photo-1464965911861-746a04b4b0ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 12},
+            {id: 37, name: "Peuyeum Bandung", category: "Makanan Ringan", originalPrice: 20000, price: 8000, expiry: "2023-11-25", store: "Oleh-oleh Bandung", city: "Bandung", image: "https://images.unsplash.com/photo-1626509623667-27b23398335b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 7},
+            {id: 38, name: "Roti Bagelen", category: "Roti & Kue", originalPrice: 35000, price: 18000, expiry: "2023-12-10", store: "Abadi", city: "Bandung", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 9},
+            {id: 39, name: "Keripik Pedas Level 5", category: "Makanan Ringan", originalPrice: 22000, price: 11000, expiry: "2023-12-20", store: "Toko Snack", city: "Bandung", image: "https://images.unsplash.com/photo-1566478989037-eec170784d0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 15},
+            {id: 40, name: "Yoghurt Stick Mix", category: "Minuman", originalPrice: 15000, price: 7500, expiry: "2023-11-30", store: "Cimory Store", city: "Bandung", image: "https://images.unsplash.com/photo-1571212515416-f785636cb28a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 20},
+
+            // --- SURABAYA (12 Items) ---
+            {id: 7, name: "Jeruk Mandarin", category: "Produk Segar", originalPrice: 30000, price: 12000, expiry: "2023-11-28", store: "Hokky Buah", city: "Surabaya", image: "https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 8},
+            {id: 8, name: "Lapis Surabaya (Pinggiran)", category: "Roti & Kue", originalPrice: 60000, price: 25000, expiry: "2023-11-23", store: "Spikoe Resep Kuno", city: "Surabaya", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 4},
+            {id: 41, name: "Almond Crispy Cheese", category: "Makanan Ringan", originalPrice: 55000, price: 30000, expiry: "2023-12-05", store: "Wisata Rasa", city: "Surabaya", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 10},
+            {id: 42, name: "Sambal Bawang Botol", category: "Makanan Ringan", originalPrice: 28000, price: 15000, expiry: "2023-12-15", store: "Depot Bu Rudy", city: "Surabaya", image: "https://images.unsplash.com/photo-1588644525273-f37b60d78512?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 12},
+            {id: 43, name: "Bandeng Asap Vacuum", category: "Makanan Ringan", originalPrice: 70000, price: 40000, expiry: "2023-11-30", store: "Toko Oleh-Oleh SBY", city: "Surabaya", image: "https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 3},
+            {id: 44, name: "Lapis Kukus Pahlawan", category: "Roti & Kue", originalPrice: 35000, price: 18000, expiry: "2023-11-23", store: "Lapis Pahlawan", city: "Surabaya", image: "https://images.unsplash.com/photo-1602903489874-a0297395232a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 6},
+            {id: 45, name: "Roti Bluder Coklat", category: "Roti & Kue", originalPrice: 12000, price: 6000, expiry: "2023-11-25", store: "Cokro Bakery", city: "Surabaya", image: "https://images.unsplash.com/photo-1586289883499-f11d28aaf52f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 20},
+            {id: 46, name: "Apel Malang 1kg", category: "Produk Segar", originalPrice: 30000, price: 10000, expiry: "2023-11-26", store: "Hokky Graha", city: "Surabaya", image: "https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 9},
+            {id: 47, name: "Kerupuk Ikan Kenjeran", category: "Makanan Ringan", originalPrice: 40000, price: 20000, expiry: "2023-12-25", store: "Sentra Ikan", city: "Surabaya", image: "https://images.unsplash.com/photo-1625937751995-12b234eb7781?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 5},
+            {id: 48, name: "Petis Udang 250g", category: "Makanan Ringan", originalPrice: 25000, price: 12000, expiry: "2024-01-01", store: "Toko Bumbu", city: "Surabaya", image: "https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 8},
+            {id: 49, name: "Sirup Marjan Melon", category: "Minuman", originalPrice: 22000, price: 11000, expiry: "2023-12-10", store: "Hypermart", city: "Surabaya", image: "https://images.unsplash.com/photo-1587883012610-e3df17d41270?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 15},
+            {id: 50, name: "Kecap Manis Refill", category: "Makanan Ringan", originalPrice: 25000, price: 15000, expiry: "2023-12-05", store: "Indomaret", city: "Surabaya", image: "https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 10},
+
+            // --- MEDAN (12 Items) ---
+            {id: 9, name: "Bolu Gulung Keju", category: "Roti & Kue", originalPrice: 85000, price: 40000, expiry: "2023-11-22", store: "Bolu Meranti", city: "Medan", image: "https://images.unsplash.com/photo-1519340333755-56e9c1d04579?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 2},
+            {id: 10, name: "Wortel Brastagi", category: "Produk Segar", originalPrice: 15000, price: 5000, expiry: "2023-11-27", store: "Brastagi Supermarket", city: "Medan", image: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 10},
+            {id: 51, name: "Bika Ambon Kecil", category: "Roti & Kue", originalPrice: 60000, price: 35000, expiry: "2023-11-24", store: "Zulaikha", city: "Medan", image: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 5},
+            {id: 52, name: "Durian Kupas Box", category: "Produk Segar", originalPrice: 100000, price: 60000, expiry: "2023-11-22", store: "Ucok Durian", city: "Medan", image: "https://images.unsplash.com/photo-1587324040704-23a98d363b6d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 10},
+            {id: 53, name: "Sirup Markisa Asli", category: "Minuman", originalPrice: 45000, price: 25000, expiry: "2023-12-15", store: "Noerlen", city: "Medan", image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 8},
+            {id: 54, name: "Teri Medan 250g", category: "Makanan Ringan", originalPrice: 50000, price: 30000, expiry: "2023-12-30", store: "Pasar Rame", city: "Medan", image: "https://images.unsplash.com/photo-1625937751995-12b234eb7781?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 6},
+            {id: 55, name: "Kopi Bubuk Sidikalang", category: "Minuman", originalPrice: 40000, price: 20000, expiry: "2024-01-10", store: "Kopi Tiam", city: "Medan", image: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 12},
+            {id: 56, name: "Roti Ketawa Wijen", category: "Makanan Ringan", originalPrice: 20000, price: 10000, expiry: "2023-12-05", store: "Toko Roti Medan", city: "Medan", image: "https://images.unsplash.com/photo-1605197584506-c505202f43d0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 20},
+            {id: 57, name: "Manisan Jambu Bangkok", category: "Makanan Ringan", originalPrice: 35000, price: 18000, expiry: "2023-11-28", store: "Toko Manisan", city: "Medan", image: "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 7},
+            {id: 58, name: "Lemang Bambu", category: "Makanan Ringan", originalPrice: 30000, price: 15000, expiry: "2023-11-22", store: "Toko Tradisional", city: "Medan", image: "https://images.unsplash.com/photo-1598511726612-933cc6d4e3e6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 4},
+            {id: 59, name: "Pancake Durian Mini", category: "Roti & Kue", originalPrice: 50000, price: 25000, expiry: "2023-11-23", store: "Nelayan", city: "Medan", image: "https://images.unsplash.com/photo-1623944890523-28495faca26d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 8},
+            {id: 60, name: "Kue Lupis Ketan", category: "Roti & Kue", originalPrice: 15000, price: 7000, expiry: "2023-11-21", store: "Gerai Kue", city: "Medan", image: "https://images.unsplash.com/photo-1598511726612-933cc6d4e3e6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80", stock: 15}
+        ];
+
+        let products = JSON.parse(localStorage.getItem('rescueProducts')) || initialProducts;
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDatesForDemo();
+            updateAuthUI();
+            renderProducts();
+            renderInventory();
+            updateCartCount(); // Init Cart Badge
+        });
+
+        function updateDatesForDemo() {
+            if(!localStorage.getItem('rescueProducts')) {
+                const today = new Date();
+                products.forEach((p, index) => {
+                    const futureDate = new Date(today);
+                    futureDate.setDate(today.getDate() + (index % 5) + 1); 
+                    p.expiry = futureDate.toISOString().split('T')[0];
+                });
+                saveData();
+            }
+        }
+
+        // --- COMMON UI LOGIC ---
+        function openModal(modalId) {
+            // Profile Logic
+            if(modalId === 'modal-profile' && currentUser) {
+                document.getElementById('profile-name').value = currentUser.name;
+                document.getElementById('profile-email-display').innerText = currentUser.email;
+                document.getElementById('profile-address').value = currentUser.address || '';
+                document.getElementById('profile-city').value = currentUser.city || 'Jakarta Selatan';
+                const title = currentUser.role === 'seller' ? 'Profil Toko' : 'Profil Pembeli';
+                document.getElementById('profile-modal-title').innerText = title;
+                const hint = currentUser.role === 'seller' ? 'Lokasi ini akan menjadi lokasi toko Anda.' : 'Produk akan difilter berdasarkan kota ini.';
+                document.getElementById('profile-city-hint').innerText = hint;
+            }
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function switchModal(closeId, openId) {
+            closeModal(closeId);
+            openModal(openId);
+        }
+
+        // --- CART LOGIC (NEW) ---
+
+        function addToCart(id) {
+            if (!currentUser) {
+                alert("Silakan Login terlebih dahulu untuk memesan barang.");
+                openModal('modal-login');
+                return;
+            }
+            if (currentUser.role === 'seller') {
+                alert("Akun penjual tidak dapat membeli barang.");
+                return;
+            }
+
+            const product = products.find(p => p.id === id);
+            const existingItem = cart.find(item => item.id === id);
+
+            if (existingItem) {
+                if (existingItem.qty < product.stock) {
+                    existingItem.qty++;
+                } else {
+                    alert("Stok maksimal tercapai untuk produk ini.");
+                    return;
+                }
+            } else {
+                cart.push({...product, qty: 1});
+            }
+
+            saveCart();
+            updateCartCount();
+            
+            // Animasi kecil pada icon cart (optional visual feedback)
+            const cartBadge = document.getElementById('cart-count');
+            cartBadge.classList.add('scale-125');
+            setTimeout(() => cartBadge.classList.remove('scale-125'), 200);
+        }
+
+        function openCart() {
+            if (!currentUser && !isGuestMode) {
+                alert("Silakan Login untuk melihat keranjang.");
+                return;
+            }
+            renderCart();
+            openModal('modal-cart');
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const emptyState = document.getElementById('cart-empty-state');
+            const footer = document.getElementById('cart-footer');
+            const totalEl = document.getElementById('cart-total-price');
+
+            container.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                emptyState.classList.remove('hidden');
+                footer.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                footer.classList.remove('hidden');
+
+                cart.forEach((item, index) => {
+                    const itemTotal = item.price * item.qty;
+                    total += itemTotal;
+
+                    const html = `
+                        <div class="flex gap-4 border-b pb-4 last:border-0 last:pb-0">
+                            <img src="${item.image}" class="w-16 h-16 rounded-lg object-cover bg-gray-100">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-gray-800 line-clamp-1">${item.name}</h4>
+                                <p class="text-xs text-gray-500 mb-2">${item.store}</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-brand-600">Rp ${itemTotal.toLocaleString('id-ID')}</span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="updateQty(${index}, -1)" class="w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center text-xs"><i class="fa-solid fa-minus"></i></button>
+                                        <span class="text-sm font-semibold w-4 text-center">${item.qty}</span>
+                                        <button onclick="updateQty(${index}, 1)" class="w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600 self-start p-1"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+            }
+            totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
+        }
+
+        function updateQty(index, change) {
+            const item = cart[index];
+            const product = products.find(p => p.id === item.id);
+            
+            if (change === 1 && item.qty >= product.stock) {
+                alert("Stok tidak mencukupi.");
+                return;
+            }
+            if (change === -1 && item.qty === 1) {
+                // Do nothing, let user use delete button or handle removal here if preferred
+                return; 
+            }
+
+            item.qty += change;
+            saveCart();
+            renderCart();
+            updateCartCount();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            saveCart();
+            renderCart();
+            updateCartCount();
+        }
+
+        function checkout() {
+            if (cart.length === 0) return;
+            
+            // Logic Checkout: Decrease stock from real products (simulation)
+            cart.forEach(item => {
+                const prodIndex = products.findIndex(p => p.id === item.id);
+                if (prodIndex !== -1) {
+                    products[prodIndex].stock -= item.qty;
+                    if (products[prodIndex].stock < 0) products[prodIndex].stock = 0;
+                }
+            });
+            
+            saveData(); // Save updated stocks
+            renderProducts(); // Refresh catalog UI
+
+            // Reset Cart
+            cart = [];
+            saveCart();
+            updateCartCount();
+            closeModal('modal-cart');
+            openModal('modal-success');
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((acc, item) => acc + item.qty, 0);
+            const badge = document.getElementById('cart-count');
+            badge.innerText = count;
+            
+            if (count > 0) {
+                badge.classList.remove('scale-0');
+            } else {
+                badge.classList.add('scale-0');
+            }
+        }
+
+        function saveCart() {
+            localStorage.setItem('rescueCart', JSON.stringify(cart));
+        }
+
+        // --- AUTH FUNCTIONS ---
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value; 
+            const address = document.getElementById('reg-address').value;
+            const city = document.getElementById('reg-city').value; 
+            const role = document.getElementById('reg-role').value;
+
+            const newUser = { name, email, password, address, city, role };
+            let users = JSON.parse(localStorage.getItem('rescueUsers')) || [];
+            
+            if(users.find(u => u.email === email)) {
+                alert('Email sudah terdaftar!');
+                return;
+            }
+
+            users.push(newUser);
+            localStorage.setItem('rescueUsers', JSON.stringify(users));
+
+            loginUser(newUser);
+            closeModal('modal-register');
+            e.target.reset();
+            alert('Pendaftaran berhasil! Selamat datang.');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const users = JSON.parse(localStorage.getItem('rescueUsers')) || [];
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (user) {
+                loginUser(user);
+                closeModal('modal-login');
+                e.target.reset();
+                alert('Login berhasil!');
+            } else {
+                alert('Email atau password salah. Coba lagi atau daftar baru.');
+            }
+        }
+
+        function loginUser(user) {
+            currentUser = user;
+            isGuestMode = false;
+            localStorage.setItem('rescueCurrentUser', JSON.stringify(currentUser));
+            updateAuthUI();
+            renderProducts(); 
+        }
+
+        function handleLogout() {
+            if(confirm("Yakin ingin keluar?")) {
+                currentUser = null;
+                isGuestMode = false;
+                localStorage.removeItem('rescueCurrentUser');
+                updateAuthUI();
+                location.reload();
+            }
+        }
+
+        function startGuestMode() {
+            isGuestMode = true;
+            updateAuthUI();
+            renderProducts();
+        }
+
+        function handleUpdateProfile(e) {
+            e.preventDefault();
+            if (currentUser) {
+                currentUser.name = document.getElementById('profile-name').value;
+                currentUser.address = document.getElementById('profile-address').value;
+                currentUser.city = document.getElementById('profile-city').value;
+
+                localStorage.setItem('rescueCurrentUser', JSON.stringify(currentUser));
+                let users = JSON.parse(localStorage.getItem('rescueUsers')) || [];
+                const userIndex = users.findIndex(u => u.email === currentUser.email);
+                if(userIndex !== -1) {
+                    users[userIndex] = { ...users[userIndex], ...currentUser };
+                    localStorage.setItem('rescueUsers', JSON.stringify(users));
+                }
+
+                updateAuthUI();
+                renderProducts();
+                closeModal('modal-profile');
+                alert("Profil berhasil diperbarui!");
+            }
+        }
+
+        function updateAuthUI() {
+            const authButtons = document.getElementById('auth-buttons');
+            const userProfile = document.getElementById('user-profile');
+            const cartIcon = document.getElementById('cart-icon-container');
+            const mobAuth = document.getElementById('mobile-auth-buttons');
+            const mobProfile = document.getElementById('mobile-user-profile');
+            const mobNavLinks = document.getElementById('mobile-nav-links');
+            
+            const navName = document.getElementById('nav-user-name');
+            const navRole = document.getElementById('nav-user-role');
+            const navLocation = document.getElementById('nav-user-location');
+            const buyerLocation = document.getElementById('buyer-location-display');
+            const filterInfo = document.getElementById('filter-info-text');
+
+            const landingView = document.getElementById('landing-view');
+            const buyerView = document.getElementById('buyer-view');
+            const sellerView = document.getElementById('seller-view');
+
+            landingView.classList.add('hidden');
+            buyerView.classList.add('hidden');
+            sellerView.classList.add('hidden');
+            cartIcon.classList.add('hidden');
+
+            if (currentUser) {
+                authButtons.classList.add('hidden');
+                authButtons.classList.remove('md:flex'); 
+                userProfile.classList.remove('hidden');
+                userProfile.classList.add('md:flex');
+                
+                navName.innerText = currentUser.name;
+                const roleLabel = currentUser.role === 'seller' ? 'Pemilik Toko' : 'Pembeli';
+                navRole.innerText = roleLabel;
+                const cityDisplay = currentUser.city || 'Belum ada lokasi';
+                navLocation.innerText = cityDisplay;
+                
+                mobAuth.classList.add('hidden');
+                mobProfile.classList.remove('hidden');
+                document.getElementById('mobile-user-name').innerText = currentUser.name;
+                document.getElementById('mobile-user-role').innerText = roleLabel;
+                mobNavLinks.classList.remove('hidden');
+
+                if(currentUser.role === 'seller') {
+                    sellerView.classList.remove('hidden');
+                    document.getElementById('btn-mob-buyer').classList.add('hidden');
+                    document.getElementById('btn-mob-seller').classList.remove('hidden');
+                } else {
+                    buyerView.classList.remove('hidden');
+                    cartIcon.classList.remove('hidden');
+                    document.getElementById('btn-mob-seller').classList.add('hidden');
+                    document.getElementById('btn-mob-buyer').classList.remove('hidden');
+                    buyerLocation.innerText = cityDisplay;
+                    filterInfo.innerText = `Menampilkan produk di ${cityDisplay}`;
+                }
+            } else {
+                authButtons.classList.remove('hidden');
+                authButtons.classList.add('md:flex'); 
+                userProfile.classList.add('hidden');
+                userProfile.classList.remove('md:flex'); 
+                mobAuth.classList.remove('hidden');
+                mobProfile.classList.add('hidden');
+                mobNavLinks.classList.add('hidden');
+
+                if (isGuestMode) {
+                    buyerView.classList.remove('hidden');
+                    cartIcon.classList.remove('hidden');
+                    buyerLocation.innerText = "Semua Kota (Tamu)";
+                    filterInfo.innerText = "Menampilkan semua produk";
+                } else {
+                    landingView.classList.remove('hidden');
+                }
+            }
+        }
+
+        function filterCategory(category) {
+            currentFilter = category;
+            const buttons = document.querySelectorAll('.cat-btn');
+            buttons.forEach(btn => {
+                if (btn.innerText.includes(category) || (category === 'all' && btn.innerText === 'Semua')) {
+                    btn.classList.add('bg-brand-100', 'text-brand-700', 'ring-2', 'ring-brand-500');
+                    btn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+                } else {
+                    btn.classList.remove('bg-brand-100', 'text-brand-700', 'ring-2', 'ring-brand-500');
+                    btn.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+                }
+            });
+            renderProducts();
+        }
+
+        function filterProducts() {
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            const emptyState = document.getElementById('empty-state');
+            
+            grid.innerHTML = '';
+
+            let filtered = products.filter(p => {
+                const matchesCat = currentFilter === 'all' || p.category === currentFilter;
+                const matchesSearch = p.name.toLowerCase().includes(searchVal) || p.store.toLowerCase().includes(searchVal);
+                return matchesCat && matchesSearch;
+            });
+
+            if (currentUser && currentUser.role === 'buyer' && currentUser.city) {
+                filtered = filtered.filter(p => p.city === currentUser.city);
+            }
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filtered.forEach(p => {
+                    const discount = Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100);
+                    const diffDays = Math.ceil(Math.abs(new Date(p.expiry) - new Date()) / (1000 * 60 * 60 * 24)); 
+                    let urgencyClass = diffDays <= 2 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
+                    let urgencyText = diffDays <= 0 ? 'Hari ini!' : `${diffDays} hari lagi`;
+
+                    // Check if stock is available
+                    const isOutOfStock = p.stock <= 0;
+                    const buttonText = isOutOfStock ? 'Habis' : 'Selamatkan <i class="fa-solid fa-basket-shopping"></i>';
+                    const buttonClass = isOutOfStock 
+                        ? 'bg-gray-300 cursor-not-allowed' 
+                        : 'bg-brand-600 hover:bg-brand-700';
+                    const buttonAction = isOutOfStock ? '' : `onclick="addToCart(${p.id})"`;
+
+                    const html = `
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col card-hover transition-all duration-300">
+                            <div class="relative h-48 bg-gray-200">
+                                <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover">
+                                <div class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">-${discount}%</div>
+                                <div class="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded flex items-center gap-1"><i class="fa-solid fa-store"></i> ${p.store}</div>
+                                <div class="absolute top-2 left-2 bg-white text-gray-800 text-xs px-2 py-1 rounded font-bold shadow-sm">${p.city || 'Umum'}</div>
+                            </div>
+                            <div class="p-4 flex-1 flex flex-col">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="text-xs font-semibold uppercase text-gray-400 tracking-wider">${p.category}</div>
+                                    <div class="text-xs px-2 py-0.5 rounded-full font-medium ${urgencyClass}"><i class="fa-regular fa-clock mr-1"></i> ${urgencyText}</div>
+                                </div>
+                                <h3 class="font-bold text-gray-800 text-lg mb-1 leading-tight">${p.name}</h3>
+                                <div class="text-xs text-gray-500 mb-2">Stok: ${p.stock}</div>
+                                <div class="mt-auto pt-3">
+                                    <div class="flex items-end gap-2 mb-3">
+                                        <span class="text-xl font-bold text-brand-600">Rp ${p.price.toLocaleString('id-ID')}</span>
+                                        <span class="text-sm text-gray-400 line-through mb-1">Rp ${p.originalPrice.toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <button ${buttonAction} class="w-full ${buttonClass} text-white font-medium py-2 rounded-lg transition flex justify-center items-center gap-2">${buttonText}</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.innerHTML += html;
+                });
+            }
+        }
+
+        // --- SELLER FUNCTIONS ---
+        function handleAddProduct(e) {
+            e.preventDefault();
+            if (!currentUser || currentUser.role !== 'seller') {
+                alert("Akses ditolak. Anda harus login sebagai Toko.");
+                return;
+            }
+            const name = document.getElementById('prod-name').value;
+            const cat = document.getElementById('prod-category').value;
+            const priceOrig = parseInt(document.getElementById('prod-price-original').value);
+            const pricePromo = parseInt(document.getElementById('prod-price-promo').value);
+            const expiry = document.getElementById('prod-expiry').value;
+            const stock = document.getElementById('prod-stock').value;
+
+            let imgUrl = "https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
+            if(cat.includes('Roti')) imgUrl = "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
+            if(cat.includes('Segar')) imgUrl = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
+            if(cat.includes('Minuman')) imgUrl = "https://images.unsplash.com/photo-1635436368482-841c3055375a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
+
+            const newProduct = {
+                id: Date.now(), name, category: cat, originalPrice: priceOrig, price: pricePromo, expiry,
+                store: currentUser.name + " Store", city: currentUser.city || 'Jakarta Selatan', image: imgUrl, stock
+            };
+            products.unshift(newProduct);
+            saveData();
+            renderInventory();
+            renderProducts(); 
+            e.target.reset();
+            alert("Produk berhasil ditambahkan ke marketplace di kota " + (currentUser.city || 'Jakarta Selatan'));
+        }
+
+        function renderInventory() {
+            const tbody = document.getElementById('inventory-list');
+            const emptyInv = document.getElementById('inventory-empty');
+            tbody.innerHTML = '';
+            
+            if (products.length === 0) {
+                emptyInv.classList.remove('hidden');
+            } else {
+                emptyInv.classList.add('hidden');
+                // Filter only seller's products (using name match for demo simplicity)
+                const sellerProducts = currentUser ? products.filter(p => p.store.includes(currentUser.name)) : [];
+                
+                // Show all for demo if seller has no products yet or logic simple
+                const displayProducts = sellerProducts.length > 0 ? sellerProducts : products;
+
+                displayProducts.forEach(p => {
+                    const html = `
+                        <tr class="hover:bg-gray-50 border-b border-gray-100 last:border-0">
+                            <td class="px-6 py-4"><div class="font-medium text-gray-900">${p.name}</div><div class="text-xs text-gray-500">${p.category}</div></td>
+                            <td class="px-6 py-4 font-medium text-brand-600">Rp ${p.price.toLocaleString('id-ID')}</td>
+                             <td class="px-6 py-4 text-gray-500">${p.city}</td>
+                            <td class="px-6 py-4 text-gray-500">${p.stock}</td>
+                            <td class="px-6 py-4"><button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700 text-sm font-medium">Hapus</button></td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += html;
+                });
+            }
+        }
+
+        function deleteProduct(id) {
+            if(confirm('Hapus produk ini dari etalase?')) {
+                products = products.filter(p => p.id !== id);
+                saveData();
+                renderInventory();
+                renderProducts();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('rescueProducts', JSON.stringify(products));
+        }
+    </script>
+</body>
+</html>
